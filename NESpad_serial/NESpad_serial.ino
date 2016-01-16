@@ -105,7 +105,7 @@ void TestPanel::setFocus(byte state){
 // How far through the beat are we?
 byte beatCompletion() {
   long m = millis() - timebase;
-  return (long) m * 256 * bpm / 60 / 1000;
+  return (long) m * 255 * bpm / 60 / 1000;
 }
 
 byte beat() {
@@ -130,7 +130,8 @@ void TestPanel::drawForest(){
   
   for(i=_start;i<_end;i++){
     byte b = sin8((i + _counter) * 256 * 4 / _length);
-    leds[i] = CRGB(0, b, 256 - b);
+    b /= 2;
+    leds[i] = CRGB(0, b, 128 - b);
   }
 }
 
@@ -393,7 +394,17 @@ void onBeatChanged() {
 }
 
 void onBarChanged() {
-  setColor(CHSV(random(256), 255, 128));
+  setColor(CHSV(random(256), 255, 255));
+}
+
+void drawSolid(CRGB c){
+  int i;
+
+  for (i=0;i<NUM_PANELS;i++){
+      if (panels[i]->focus){
+        panels[i]->drawSolid(c);
+      }
+   }
 }
 
 long lastBeat = 0;
@@ -424,8 +435,11 @@ void loop() {
   int i;
 
   if (millis() - codeEnabledAt < 5000){
-    byte c = (long) 255 * (5000 - (millis() - codeEnabledAt)) / 5000;
-    fill_solid(leds, NUM_LEDS, CRGB(c,c,c));
+    // secret code flash
+    byte i = (long) 255 * (5000 - (millis() - codeEnabledAt)) / 5000;
+
+    CRGB c = ColorFromPalette(HeatColors_p, i, 255, LINEARBLEND);
+    fill_solid(leds, NUM_LEDS, c);
   } else if (mode % NUM_MODES == 0) {
     // Safety mode, red at the back, white at the front
     panels[0]->drawSolid(CRGB(128,0,0));
@@ -433,52 +447,46 @@ void loop() {
   } else {
     byte m = mode;
 
-    if (onRelease(NES_A) || onRelease(NES_B)){
-      onBarChanged();
-    }
-    
-    if (state & NES_A) {
-      m += 23;
-      setColor(CRGB(64,64,64));
-    }
-    if (state & NES_B) {
-      m += 37;
-      setColor(CRGB(255,0,0));
-    }
-    if ((state & NES_B) && (state & NES_A)) {
-      setColor(CRGB(0,64,255));
-    }
-
-    m = m % NUM_MODES;
-
-    // dont randomly go to safety mode
-    if (m == 0){
-      m++;
-    }
-
-    for (i=0;i<NUM_PANELS;i++){
-      if ((panels[i]->focus) || (m > 9)) {
+    if (state & NES_START) {
+      // darkness
+    } else if ((state & NES_B) && (state & NES_A)) {
+      drawSolid(CRGB(0,0,192));
+    } else if (state & NES_B) {
+      drawSolid(CRGB(192, 0, 0));
+    } else if (state & NES_A) {
+      drawSolid(CRGB(0,192,0));
+    } else {
+      m = m % NUM_MODES;
   
-        switch (m) {
-          case 1: panels[i]->drawForest(); break;
-          case 2: panels[i]->drawRainbow(); break;
-          case 3: panels[i]->drawSwipe(); break;
-          case 4: panels[i]->drawChaser(); break;
-          case 5: panels[i]->drawStrobe(); break;
-          case 6: panels[i]->drawSparkles(); break;
-          case 7: panels[i]->drawWipeOut(); break;
-          case 8: panels[i]->drawWipeIn(); break;
-          case 9: panels[i]->drawPulse(); break;
-          case 10: panels[i]->drawRomance(); break;
-          case 11: panels[i]->drawStoners(); break;
-          case 12: panels[i]->drawDisco(); break;
+      // dont randomly go to safety mode
+      if (m == 0){
+        m++;
+      }
+  
+      for (i=0;i<NUM_PANELS;i++){
+        if ((panels[i]->focus) || (m > 9)) {
+    
+          switch (m) {
+            case 1: panels[i]->drawForest(); break;
+            case 2: panels[i]->drawRainbow(); break;
+            case 3: panels[i]->drawSwipe(); break;
+            case 4: panels[i]->drawChaser(); break;
+            case 5: panels[i]->drawStrobe(); break;
+            case 6: panels[i]->drawSparkles(); break;
+            case 7: panels[i]->drawWipeOut(); break;
+            case 8: panels[i]->drawWipeIn(); break;
+            case 9: panels[i]->drawPulse(); break;
+            case 10: panels[i]->drawRomance(); break;
+            case 11: panels[i]->drawStoners(); break;
+            case 12: panels[i]->drawDisco(); break;
+          }
         }
       }
     }
   }
     
   FastLED.show();
-  delay(1000 / 60);
+  delay(1000 / 120);
 }
 
 
