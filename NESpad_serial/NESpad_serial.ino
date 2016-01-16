@@ -1,3 +1,14 @@
+/* todo: 
+ *  
+ *  * stop cycling panels for 2 seconds after hitting arrow key (black 
+      when arrow not pressed)
+    * only go back to mode 0 when press and hold select
+    * alternate between mode 0 and mode 1 (all black) when hold select
+    * go to alternate color scheme when pressing A or B
+    * white strobe when holding A+B (?)
+    * add konami code for insane white pulse
+ */
+  
 #include "FastLED.h"
 #include <NESpad.h>
 
