@@ -39,9 +39,9 @@ void __assert(const char *__func, const char *__file, int __lineno, const char *
 }
 
 // How many leds in your strip?
-#define SIDE_PANEL 10 // 29 + 25 + 26 + 19
-#define FRONT_PANEL 10 // 18 + 24 + 18 + 24
-#define BACK_PANEL 10 // 25 + 25 + 59 + 59
+#define SIDE_PANEL 75 // 29 + 25 + 26 + 19
+#define FRONT_PANEL 75 // 18 + 24 + 18 + 24
+#define BACK_PANEL 75 // 25 + 25 + 59 + 59
 #define NUM_LEDS BACK_PANEL + SIDE_PANEL + SIDE_PANEL + FRONT_PANEL
 #define NUM_MODES 13
 
@@ -76,7 +76,7 @@ class TestPanel
     void drawRomance();
     void drawStoners();
     void drawDisco();
-    void setFocus(byte);
+    void setFocus(int);
     void setColor(CRGB);
     bool focus;
   
@@ -105,7 +105,7 @@ void TestPanel::setColor(CRGB c){
   _color = c;
 }
 
-void TestPanel::setFocus(byte state){
+void TestPanel::setFocus(int state){
   if (state & _button) {
     focus = true;
   }
@@ -246,18 +246,18 @@ void setup() {
   Serial.begin(9600);  
   pinMode(13, OUTPUT);
   FastLED.setBrightness(255);
-  // set_max_power_in_volts_and_milliamps(5, 9999);
+  set_max_power_in_volts_and_milliamps(5, 10000);
 
     Serial.println("Starting up!\n");
     Serial.flush();
 }
 
 // put your own strobe/clock/data pin numbers here -- see the pinout in readme.txt
-SNESpad nintendo = SNESpad(4,5,6);
+SNESpad nintendo = SNESpad(8,9,10);
 
-byte state = 0;
-byte lastState = 0;
-byte mode = 5;
+int state = 0;
+int lastState = 0;
+byte mode = 9;
 
 void checkMode () {
   int x = 2;
@@ -369,6 +369,10 @@ void checkButtons() {
     mode++;
   }
 
+  if (onPush(NES_START)){
+    tap();
+  }
+
   int i;
   
   for (i=0;i<NUM_PANELS;i++){
@@ -465,18 +469,26 @@ void loop() {
   } else {
     byte m = mode;
 
-    Serial.println("Beep boop");
-    Serial.println(m);
-
     if (state & SNES_START) {
       // darkness
-      Serial.println("Darkness?");
-    } else if ((state & NES_B) && (state & NES_A)) {
-      drawSolid(CRGB(0,0,192));
-    } else if (state & NES_B) {
-      drawSolid(CRGB(192, 0, 0));
-    } else if (state & NES_A) {
-      drawSolid(CRGB(0,192,0));
+    } else if ((state & SNES_X)) {
+      drawSolid(CRGB::DeepPink);
+    } else if ((state & SNES_Y)) {
+      drawSolid(CRGB::Lime);
+    } else if (state & SNES_B) {
+      drawSolid(CRGB::Gold);
+    } else if (state & SNES_A) {
+      drawSolid(CRGB::RoyalBlue);
+    } else if (state & SNES_R) {
+      drawSolid(CRGB::Red);
+    } else if (state & SNES_L) {
+      // Super strobe
+      drawSolid(CRGB::White);
+      FastLED.show();
+      delay(2);
+      drawSolid(CRGB::Black);
+      FastLED.show();
+      delay(50);
     } else {
       m = m % NUM_MODES;
   
